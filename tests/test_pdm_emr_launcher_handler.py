@@ -26,14 +26,16 @@ class TestPDMLauncher(unittest.TestCase):
         dynamodb_resource = self.mock_get_dynamodb_table()
         result = event_handler.query_dynamo(dynamodb_resource, DATE)
         self.assertEqual(
-            result, [{
-                "Correlation_Id": "test_correlation_id",
-                "DataProduct": "ADG-full",
-                "Date": "2021-03-01",
-                "S3_Prefix": "test_s3_prefix",
-                "Run_Id": 1,
-            }]
-            ,
+            result,
+            [
+                {
+                    "Correlation_Id": "test_correlation_id",
+                    "DataProduct": "ADG-full",
+                    "Date": "2021-03-01",
+                    "S3_Prefix": "test_s3_prefix",
+                    "Run_Id": 1,
+                }
+            ],
         )
 
     @mock_dynamodb2
@@ -51,13 +53,13 @@ class TestPDMLauncher(unittest.TestCase):
     @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
     @mock_dynamodb2
     def test_handler_sns_message_sent(
-            self,
-            mock_logger,
-            get_sns_client_mock,
-            get_dynamo_table_mock,
-            get_environment_variables_mock,
-            setup_logging_mock,
-            send_sns_message_mock,
+        self,
+        mock_logger,
+        get_sns_client_mock,
+        get_dynamo_table_mock,
+        get_environment_variables_mock,
+        setup_logging_mock,
+        send_sns_message_mock,
     ):
         dynamodb_resource = self.mock_get_dynamodb_table()
         get_dynamo_table_mock.return_value = dynamodb_resource
@@ -79,11 +81,11 @@ class TestPDMLauncher(unittest.TestCase):
     @mock.patch("pdm_emr_launcher_lambda.event_handler.get_sns_client")
     @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
     def test_handler_invalid_environment_variable(
-            self,
-            mock_logger,
-            get_sns_client_mock,
-            get_environment_variables_mock,
-            setup_logging_mock,
+        self,
+        mock_logger,
+        get_sns_client_mock,
+        get_environment_variables_mock,
+        setup_logging_mock,
     ):
         sns_client_mock = mock.MagicMock()
         get_sns_client_mock.return_value = sns_client_mock

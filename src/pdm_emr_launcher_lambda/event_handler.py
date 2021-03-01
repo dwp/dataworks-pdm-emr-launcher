@@ -105,8 +105,10 @@ def query_dynamo(dynamo_table, today):
 
     """
     response = dynamo_table.scan(
-        FilterExpression=Attr(DATE_KEY).eq(today) & Attr(DATA_PRODUCT_KEY).eq(DATA_PRODUCT_NAME) & Attr(RUN_ID_KEY).eq(
-            1))
+        FilterExpression=Attr(DATE_KEY).eq(today)
+        & Attr(DATA_PRODUCT_KEY).eq(DATA_PRODUCT_NAME)
+        & Attr(RUN_ID_KEY).eq(1)
+    )
     logger.info(f"Response from dynamo {response}")
     return response["Items"]
 
