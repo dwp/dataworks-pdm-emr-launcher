@@ -3,18 +3,23 @@
 """pdm_emr_launcher_lambda"""
 import argparse
 import json
-import socket
 import logging
 import os
+import socket
 import sys
+from datetime import datetime as date_time
+
 import boto3
 from boto3.dynamodb.conditions import Attr
-from datetime import datetime as date_time
+
+RUN_ID_KEY = "Run_Id"
+DATA_PRODUCT_KEY = "DataProduct"
+DATE_KEY = "Date"
+DATA_PRODUCT_NAME = "ADG-full"
+SNS_TOPIC = "adg_completion_status_sns"
 
 args = None
 logger = None
-DATA_PRODUCT_NAME = "ADG-full"
-SNS_TOPIC = "adg_completion_status_sns"
 
 
 def handler(event, context):
@@ -30,12 +35,15 @@ def handler(event, context):
     logger.info(f'Cloudwatch Event": {event}')
     try:
         logger.info(os.getcwd())
-        handle_event(event)
+        handle_event()
     except Exception as err:
         logger.error(f'Exception occurred for invocation", "error_message": {err}')
 
 
-def handle_event(event):
+def handle_event():
+    """
+    Reads relevant record from dynamoDB table and sens SNS message
+    """
     global args
 
     args = get_environment_variables()
@@ -45,6 +53,8 @@ def handle_event(event):
 
     if not args.table_name:
         raise Exception("Required environment variable TABLE_NAME is unset")
+
+    sns_client = get_sns_client()
     today = get_todays_date()
     dynamo_client = get_dynamo_table(args.table_name)
     dynamo_items = query_dynamo(dynamo_client, today)
@@ -54,13 +64,23 @@ def handle_event(event):
             f"No item found in DynamoDb table {args.table_name} for date {today} and DataProduct {DATA_PRODUCT_NAME}"
         )
     else:
+        logger.info(f"Sending message to SNS topic to launch PDM cluster")
+
+        payload = generate_lambda_launcher_payload(dynamo_items[0])
+
+        sns_response = send_sns_message(sns_client, payload, args.sns_topic)
+        logger.info(f"Response from Sns: {sns_response}.")
+
+
+def get_sns_client():
+    return boto3.client("sns")
 
 
 def send_sns_message(sns_client, payload, sns_topic_arn):
-    """Publishes the message to sns.
+    """Publishes the message to adg_completion_status_sns SNS topic.
 
     Arguments:
-        sns_client (client): The boto3 client for SQS
+        sns_client (client): The boto3 client for SNS
         payload (dict): the payload to post to SNS
         sns_topic_arn (string): the arn for the SNS topic
 
@@ -73,23 +93,8 @@ def send_sns_message(sns_client, payload, sns_topic_arn):
     return sns_client.publish(TopicArn=sns_topic_arn, Message=dumped_payload)
 
 
-def get_correlation_id(dynamodb_response):
-    """Retrieves the cluster_id from the event
-
-    Arguments:
-        dynamodb_response (dict): The dict resulting from scan dynamodb by DataProduct, Date, Run_Id
-
-    Returns:
-        cluster_id: The cluster_id found in the event
-
-    """
-    correlation_id = dynamodb_response['Correlation_Id']
-    logger.info(f"Correlation Id {correlation_id}")
-    return correlation_id
-
-
 def query_dynamo(dynamo_table, today):
-    """Queries the DynamoDb table
+    """Queries the DynamoDb table for todays run of ADG-full application, we will just use Run_Id as 1
 
     Arguments:
         dynamo_table (table): The boto3 table for DynamoDb
@@ -99,12 +104,16 @@ def query_dynamo(dynamo_table, today):
         list: The items matching the scan operation
 
     """
-    response = dynamo_table.scan(FilterExpression=Attr("Date").eq(today) & Attr("DataProduct").eq(DATA_PRODUCT_NAME) & Attr("Run_Id").eq(1))
+    response = dynamo_table.scan(
+        FilterExpression=Attr(DATE_KEY).eq(today) & Attr(DATA_PRODUCT_KEY).eq(DATA_PRODUCT_NAME) & Attr(RUN_ID_KEY).eq(
+            1))
     logger.info(f"Response from dynamo {response}")
-    return response["Items"][0]
+    return response["Items"]
+
 
 def get_todays_date():
     return date_time.now().strftime("%Y-%m-%d")
+
 
 def generate_lambda_launcher_payload(dynamo_item):
     payload = {
@@ -173,5 +182,8 @@ def get_dynamo_table(table_name):
     table = dynamodb.Table(table_name)
     return table
 
-def get_sns_client():
-    return boto3.client("sns")
+
+def get_escaped_json_string(json_string):
+    escaped_string = json.dumps(json_string)
+    logger.info(f"Escaped json: {json_string}")
+    return escaped_string
