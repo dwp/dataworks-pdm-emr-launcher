@@ -7,12 +7,12 @@ as an AWS Lambda and triggered by a Cloudwatch event.
 
 
 A DynamoDb table will be queried for additional data about the cluster:
-* Run_Id: can range from 1 to any number depending on how many times the cluster has failed/completed but we will use 1 for our query.
-* S3_Prefix: ADG output S3 path.
+* Status: must be `Completed`.
+* S3_Prefix_Analytical_DataSet: ADG output S3 path.
 * Correlation_Id: unique id the application is running for. 
 
 
-The function reads Correlation_Id and S3_prefix from data_pipeline_metadata dynamoDB table for DataProduct=ADG-full and Date=todays_date 
+The function reads Correlation_Id and S3_Prefix_Analytical_DataSet from data_pipeline_metadata dynamoDB table for DataProduct=ADG-full and Date=todays_date 
 and sends an SNS message to adg_completion_status_sns SNS topic that inturn invokes pdm-emr-launcher lambda function which will then 
 launch PDM EMR cluster.
 
