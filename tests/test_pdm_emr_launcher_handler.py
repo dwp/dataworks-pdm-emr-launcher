@@ -34,7 +34,7 @@ class TestPDMLauncher(unittest.TestCase):
                     "DataProduct": "ADG-full",
                     "Date": self.get_todays_date(),
                     "S3_Prefix": "test_s3_prefix",
-                    "Run_Id": 1,
+                    "Status": "Completed",
                 }
             ],
         )
@@ -151,7 +151,7 @@ class TestPDMLauncher(unittest.TestCase):
             "DataProduct": "ADG-full",
             "Date": date,
             "S3_Prefix": "test_s3_prefix",
-            "Run_Id": 1,
+            "Status": "Completed",
         }
 
         table.put_item(TableName=TABLE_NAME, Item=item)

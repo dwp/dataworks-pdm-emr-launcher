@@ -12,8 +12,9 @@ from datetime import datetime as date_time
 import boto3
 from boto3.dynamodb.conditions import Attr
 
-RUN_ID_KEY = "Run_Id"
 DATA_PRODUCT_KEY = "DataProduct"
+STATUS_KEY = "Status"
+STATUS_COMPLETED = "Completed"
 DATE_KEY = "Date"
 DATA_PRODUCT_NAME = "ADG-full"
 SNS_TOPIC = "adg_completion_status_sns"
@@ -107,7 +108,7 @@ def query_dynamo(dynamo_table, today):
     response = dynamo_table.scan(
         FilterExpression=Attr(DATE_KEY).eq(today)
         & Attr(DATA_PRODUCT_KEY).eq(DATA_PRODUCT_NAME)
-        & Attr(RUN_ID_KEY).eq(1)
+        & Attr(STATUS_KEY).eq(STATUS_COMPLETED)
     )
     logger.info(f"Response from dynamo {response}")
     return response["Items"]
