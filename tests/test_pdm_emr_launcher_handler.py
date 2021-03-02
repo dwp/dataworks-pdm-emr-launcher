@@ -6,12 +6,13 @@ import unittest
 from unittest import mock
 
 import boto3
+from datetime import datetime
 from moto import mock_dynamodb2
 from pdm_emr_launcher_lambda import event_handler
 
+TEST_DATE = "2000-10-01"
 SNS_TOPIC_ARN = "test-sns-topic-arn"
 TABLE_NAME = "data_pipeline_metadata"
-DATE = "2021-03-01"
 
 args = argparse.Namespace()
 args.sns_topic = SNS_TOPIC_ARN
@@ -23,15 +24,15 @@ class TestPDMLauncher(unittest.TestCase):
     @mock_dynamodb2
     @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
     def test_query_dynamo_item_exists(self, mock_logger):
-        dynamodb_resource = self.mock_get_dynamodb_table()
-        result = event_handler.query_dynamo(dynamodb_resource, DATE)
+        dynamodb_resource = self.mock_get_dynamodb_table(self.get_todays_date())
+        result = event_handler.query_dynamo(dynamodb_resource, self.get_todays_date())
         self.assertEqual(
             result,
             [
                 {
                     "Correlation_Id": "test_correlation_id",
                     "DataProduct": "ADG-full",
-                    "Date": "2021-03-01",
+                    "Date": self.get_todays_date(),
                     "S3_Prefix": "test_s3_prefix",
                     "Run_Id": 1,
                 }
@@ -41,7 +42,7 @@ class TestPDMLauncher(unittest.TestCase):
     @mock_dynamodb2
     @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
     def test_query_dynamo_item_empty_result(self, mock_logger):
-        dynamodb_resource = self.mock_get_dynamodb_table()
+        dynamodb_resource = self.mock_get_dynamodb_table(TEST_DATE)
         result = event_handler.query_dynamo(dynamodb_resource, "test")
         self.assertEqual(result, [])
 
@@ -61,7 +62,7 @@ class TestPDMLauncher(unittest.TestCase):
         setup_logging_mock,
         send_sns_message_mock,
     ):
-        dynamodb_resource = self.mock_get_dynamodb_table()
+        dynamodb_resource = self.mock_get_dynamodb_table(self.get_todays_date())
         get_dynamo_table_mock.return_value = dynamodb_resource
 
         sns_client_mock = mock.MagicMock()
@@ -75,6 +76,39 @@ class TestPDMLauncher(unittest.TestCase):
             {"correlation_id": "test_correlation_id", "s3_prefix": "test_s3_prefix"},
             args.sns_topic,
         )
+
+
+    @mock.patch("pdm_emr_launcher_lambda.event_handler.send_sns_message")
+    @mock.patch("pdm_emr_launcher_lambda.event_handler.setup_logging")
+    @mock.patch("pdm_emr_launcher_lambda.event_handler.get_environment_variables")
+    @mock.patch("pdm_emr_launcher_lambda.event_handler.get_dynamo_table")
+    @mock.patch("pdm_emr_launcher_lambda.event_handler.get_sns_client")
+    @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
+    @mock_dynamodb2
+    def test_handler_sns_message_not_sent_when_no_items_in_dynamo(
+            self,
+            mock_logger,
+            get_sns_client_mock,
+            get_dynamo_table_mock,
+            get_environment_variables_mock,
+            setup_logging_mock,
+            send_sns_message_mock,
+    ):
+        dynamodb_resource = self.mock_get_dynamodb_table(TEST_DATE)
+        get_dynamo_table_mock.return_value = dynamodb_resource
+
+        sns_client_mock = mock.MagicMock()
+        get_sns_client_mock.return_value = sns_client_mock
+        get_environment_variables_mock.return_value = args
+
+        event_handler.handler(event={}, context=None)
+
+        send_sns_message_mock.assert_not_called()
+
+
+    def get_todays_date(self):
+        return datetime.now().strftime("%Y-%m-%d")
+
 
     @mock.patch("pdm_emr_launcher_lambda.event_handler.setup_logging")
     @mock.patch("pdm_emr_launcher_lambda.event_handler.get_environment_variables")
@@ -95,7 +129,7 @@ class TestPDMLauncher(unittest.TestCase):
             event_handler.handle_event()
 
     @mock_dynamodb2
-    def mock_get_dynamodb_table(self):
+    def mock_get_dynamodb_table(self, date):
         dynamodb_client = boto3.client("dynamodb", region_name="eu-west-2")
         dynamodb_client.create_table(
             TableName=TABLE_NAME,
@@ -115,7 +149,7 @@ class TestPDMLauncher(unittest.TestCase):
         item = {
             "Correlation_Id": "test_correlation_id",
             "DataProduct": "ADG-full",
-            "Date": "2021-03-01",
+            "Date": date,
             "S3_Prefix": "test_s3_prefix",
             "Run_Id": 1,
         }
