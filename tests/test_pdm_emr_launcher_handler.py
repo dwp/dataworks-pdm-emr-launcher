@@ -77,7 +77,6 @@ class TestPDMLauncher(unittest.TestCase):
             args.sns_topic,
         )
 
-
     @mock.patch("pdm_emr_launcher_lambda.event_handler.send_sns_message")
     @mock.patch("pdm_emr_launcher_lambda.event_handler.setup_logging")
     @mock.patch("pdm_emr_launcher_lambda.event_handler.get_environment_variables")
@@ -86,13 +85,13 @@ class TestPDMLauncher(unittest.TestCase):
     @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
     @mock_dynamodb2
     def test_handler_sns_message_not_sent_when_no_items_in_dynamo(
-            self,
-            mock_logger,
-            get_sns_client_mock,
-            get_dynamo_table_mock,
-            get_environment_variables_mock,
-            setup_logging_mock,
-            send_sns_message_mock,
+        self,
+        mock_logger,
+        get_sns_client_mock,
+        get_dynamo_table_mock,
+        get_environment_variables_mock,
+        setup_logging_mock,
+        send_sns_message_mock,
     ):
         dynamodb_resource = self.mock_get_dynamodb_table(TEST_DATE)
         get_dynamo_table_mock.return_value = dynamodb_resource
@@ -105,10 +104,8 @@ class TestPDMLauncher(unittest.TestCase):
 
         send_sns_message_mock.assert_not_called()
 
-
     def get_todays_date(self):
         return datetime.now().strftime("%Y-%m-%d")
-
 
     @mock.patch("pdm_emr_launcher_lambda.event_handler.setup_logging")
     @mock.patch("pdm_emr_launcher_lambda.event_handler.get_environment_variables")
