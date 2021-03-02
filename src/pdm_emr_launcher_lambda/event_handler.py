@@ -121,7 +121,7 @@ def get_todays_date():
 def generate_lambda_launcher_payload(dynamo_item):
     payload = {
         "correlation_id": dynamo_item["Correlation_Id"],
-        "s3_prefix": dynamo_item["S3_Prefix"],
+        "s3_prefix": dynamo_item["S3_Prefix_Analytical_DataSet"],
     }
     logger.info(f"Lambda payload: {payload}")
     return payload

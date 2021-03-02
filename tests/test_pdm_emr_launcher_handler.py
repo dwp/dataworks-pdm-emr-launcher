@@ -33,7 +33,7 @@ class TestPDMLauncher(unittest.TestCase):
                     "Correlation_Id": "test_correlation_id",
                     "DataProduct": "ADG-full",
                     "Date": self.get_todays_date(),
-                    "S3_Prefix": "test_s3_prefix",
+                    "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
                     "Status": "Completed",
                 }
             ],
@@ -147,7 +147,7 @@ class TestPDMLauncher(unittest.TestCase):
             "Correlation_Id": "test_correlation_id",
             "DataProduct": "ADG-full",
             "Date": date,
-            "S3_Prefix": "test_s3_prefix",
+            "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
             "Status": "Completed",
         }
 
