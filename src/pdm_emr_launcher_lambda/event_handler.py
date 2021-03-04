@@ -165,6 +165,9 @@ def get_environment_variables():
 
     _args = parser.parse_args()
 
+    if "SNS_TOPIC" in os.environ:
+        _args.sns_topic = os.environ["SNS_TOPIC"]
+
     if "TABLE_NAME" in os.environ:
         _args.table_name = os.environ["TABLE_NAME"]
 
