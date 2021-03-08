@@ -34,7 +34,7 @@ class TestPDMLauncher(unittest.TestCase):
                     "DataProduct": "ADG-full",
                     "Date": self.get_todays_date(),
                     "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
-                    "Status": "Completed",
+                    "Status": "COMPLETED",
                 }
             ],
         )
@@ -148,7 +148,7 @@ class TestPDMLauncher(unittest.TestCase):
             "DataProduct": "ADG-full",
             "Date": date,
             "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
-            "Status": "Completed",
+            "Status": "COMPLETED",
         }
 
         table.put_item(TableName=TABLE_NAME, Item=item)
