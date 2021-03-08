@@ -14,7 +14,7 @@ from boto3.dynamodb.conditions import Attr
 
 DATA_PRODUCT_KEY = "DataProduct"
 STATUS_KEY = "Status"
-STATUS_COMPLETED = "Completed"
+STATUS_COMPLETED = "COMPLETED"
 DATE_KEY = "Date"
 DATA_PRODUCT_NAME = "ADG-full"
 SNS_TOPIC = "adg_completion_status_sns"
