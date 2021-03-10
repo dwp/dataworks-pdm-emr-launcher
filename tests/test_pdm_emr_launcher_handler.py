@@ -25,7 +25,7 @@ class TestPDMLauncher(unittest.TestCase):
     @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
     def test_query_dynamo_item_exists(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_table(self.get_todays_date())
-        result = event_handler.query_dynamo(dynamodb_resource, self.get_todays_date())
+        result = event_handler.query_dynamo(dynamodb_resource, self.get_todays_date(), "test_id")
         self.assertEqual(
             result,
             [
@@ -45,7 +45,7 @@ class TestPDMLauncher(unittest.TestCase):
     @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
     def test_query_dynamo_item_empty_result(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_table(TEST_DATE)
-        result = event_handler.query_dynamo(dynamodb_resource, "test")
+        result = event_handler.query_dynamo(dynamodb_resource, "test", "test_id")
         self.assertEqual(result, [])
 
     @mock.patch("pdm_emr_launcher_lambda.event_handler.send_sns_message")
@@ -180,3 +180,19 @@ class TestPDMLauncher(unittest.TestCase):
 
         assert actual is not None
         assert not_expected != actual
+
+    def test_get_correlation_id_returns_date_from_event(
+        self,
+    ):
+        expected = "test_id"
+        actual = event_handler.get_correlation_id(event={"correlation_id":"test_id"})
+
+        assert expected == actual
+
+    def test_get_correlation_id_returns_none_if_not_present(
+        self,
+    ):
+        not_expected = "test_date"
+        actual = event_handler.get_correlation_id(event={"correlation_id_two":"test_id"})
+
+        assert actual is None
