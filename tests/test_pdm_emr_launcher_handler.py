@@ -130,7 +130,7 @@ class TestPDMLauncher(unittest.TestCase):
         get_environment_variables_mock.return_value = argparse.Namespace()
 
         with self.assertRaises(Exception) as context:
-            event_handler.handle_event()
+            event_handler.handle_event(None)
 
     @mock_dynamodb2
     def mock_get_dynamodb_table(self, date):
@@ -163,3 +163,20 @@ class TestPDMLauncher(unittest.TestCase):
         table.put_item(TableName=TABLE_NAME, Item=item)
 
         return table
+
+    def test_get_export_date_returns_date_from_event(
+        self,
+    ):
+        expected = "test_date"
+        actual = event_handler.get_export_date(event={"export_date":"test_date"})
+
+        assert expected == actual
+
+    def test_get_export_date_returns_date_not_from_event_if_not_present(
+        self,
+    ):
+        not_expected = "test_date"
+        actual = event_handler.get_export_date(event={"export_date_two":"test_date"})
+
+        assert actual is not None
+        assert not_expected != actual

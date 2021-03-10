@@ -36,12 +36,12 @@ def handler(event, context):
     logger.info(f'Cloudwatch Event": {event}')
     try:
         logger.info(os.getcwd())
-        handle_event()
+        handle_event(event)
     except Exception as err:
         logger.error(f'Exception occurred for invocation", "error_message": {err}')
 
 
-def handle_event():
+def handle_event(event):
     """
     Reads relevant record from dynamoDB table and sens SNS message
     """
@@ -56,7 +56,7 @@ def handle_event():
         raise Exception("Required environment variable TABLE_NAME is unset")
 
     sns_client = get_sns_client()
-    today = get_todays_date()
+    today = get_export_date(event)
     dynamo_client = get_dynamo_table(args.table_name)
     dynamo_items = query_dynamo(dynamo_client, today)
 
@@ -114,7 +114,10 @@ def query_dynamo(dynamo_table, today):
     return response["Items"]
 
 
-def get_todays_date():
+def get_export_date(event):
+    if "export_date" in event:
+        return event["export_date"]
+        
     return date_time.now().strftime("%Y-%m-%d")
 
 
