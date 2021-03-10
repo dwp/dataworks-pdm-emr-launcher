@@ -34,10 +34,9 @@ class TestPDMLauncher(unittest.TestCase):
                 {
                     "Correlation_Id": "test_correlation_id",
                     "DataProduct": "ADG-full",
-                    "Date": self.get_todays_date(),
                     "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
                     "Snapshot_Type": "full",
-                    "Date": "2020-01-02",
+                    "Date": self.get_todays_date(),
                     "Status": "COMPLETED",
                 }
             ],
@@ -155,10 +154,9 @@ class TestPDMLauncher(unittest.TestCase):
         item = {
             "Correlation_Id": "test_correlation_id",
             "DataProduct": "ADG-full",
-            "Date": date,
             "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
             "Snapshot_Type": "full",
-            "Date": "2020-01-02",
+            "Date": date,
             "Status": "COMPLETED",
         }
 
