@@ -34,6 +34,8 @@ class TestPDMLauncher(unittest.TestCase):
                     "DataProduct": "ADG-full",
                     "Date": self.get_todays_date(),
                     "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
+                    "Snapshot_Type": "full",
+                    "Date": "2020-01-02",
                     "Status": "COMPLETED",
                 }
             ],
@@ -73,7 +75,12 @@ class TestPDMLauncher(unittest.TestCase):
 
         send_sns_message_mock.assert_called_once_with(
             sns_client_mock,
-            {"correlation_id": "test_correlation_id", "s3_prefix": "test_s3_prefix"},
+            {
+                "correlation_id": "test_correlation_id", 
+                "s3_prefix": "test_s3_prefix", 
+                "snapshot_type": "full", 
+                "export_date": "2020-01-02"
+            },
             args.sns_topic,
         )
 
@@ -148,6 +155,8 @@ class TestPDMLauncher(unittest.TestCase):
             "DataProduct": "ADG-full",
             "Date": date,
             "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
+            "Snapshot_Type": "full",
+            "Date": "2020-01-02",
             "Status": "COMPLETED",
         }
 
