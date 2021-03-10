@@ -25,7 +25,9 @@ class TestPDMLauncher(unittest.TestCase):
     @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
     def test_query_dynamo_item_exists(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_table(self.get_todays_date())
-        result = event_handler.query_dynamo(dynamodb_resource, self.get_todays_date())
+        result = event_handler.query_dynamo(
+            dynamodb_resource, self.get_todays_date(), "test_correlation_id"
+        )
         self.assertEqual(
             result,
             [
@@ -35,7 +37,6 @@ class TestPDMLauncher(unittest.TestCase):
                     "Date": self.get_todays_date(),
                     "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
                     "Snapshot_Type": "full",
-                    "Date": "2020-01-02",
                     "Status": "COMPLETED",
                 }
             ],
@@ -45,7 +46,7 @@ class TestPDMLauncher(unittest.TestCase):
     @mock.patch("pdm_emr_launcher_lambda.event_handler.logger")
     def test_query_dynamo_item_empty_result(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_table(TEST_DATE)
-        result = event_handler.query_dynamo(dynamodb_resource, "test")
+        result = event_handler.query_dynamo(dynamodb_resource, "test", "test_id")
         self.assertEqual(result, [])
 
     @mock.patch("pdm_emr_launcher_lambda.event_handler.send_sns_message")
@@ -79,7 +80,7 @@ class TestPDMLauncher(unittest.TestCase):
                 "correlation_id": "test_correlation_id",
                 "s3_prefix": "test_s3_prefix",
                 "snapshot_type": "full",
-                "export_date": "2020-01-02",
+                "export_date": self.get_todays_date(),
             },
             args.sns_topic,
         )
@@ -130,7 +131,7 @@ class TestPDMLauncher(unittest.TestCase):
         get_environment_variables_mock.return_value = argparse.Namespace()
 
         with self.assertRaises(Exception) as context:
-            event_handler.handle_event()
+            event_handler.handle_event(None)
 
     @mock_dynamodb2
     def mock_get_dynamodb_table(self, date):
@@ -156,10 +157,44 @@ class TestPDMLauncher(unittest.TestCase):
             "Date": date,
             "S3_Prefix_Analytical_DataSet": "test_s3_prefix",
             "Snapshot_Type": "full",
-            "Date": "2020-01-02",
             "Status": "COMPLETED",
         }
 
         table.put_item(TableName=TABLE_NAME, Item=item)
 
         return table
+
+    def test_get_export_date_returns_date_from_event(
+        self,
+    ):
+        expected = "test_date"
+        actual = event_handler.get_export_date(event={"export_date": "test_date"})
+
+        assert expected == actual
+
+    def test_get_export_date_returns_date_not_from_event_if_not_present(
+        self,
+    ):
+        not_expected = "test_date"
+        actual = event_handler.get_export_date(event={"export_date_two": "test_date"})
+
+        assert actual is not None
+        assert not_expected != actual
+
+    def test_get_correlation_id_returns_date_from_event(
+        self,
+    ):
+        expected = "test_id"
+        actual = event_handler.get_correlation_id(event={"correlation_id": "test_id"})
+
+        assert expected == actual
+
+    def test_get_correlation_id_returns_none_if_not_present(
+        self,
+    ):
+        not_expected = "test_date"
+        actual = event_handler.get_correlation_id(
+            event={"correlation_id_two": "test_id"}
+        )
+
+        assert actual is None

@@ -12,6 +12,7 @@ from datetime import datetime as date_time
 import boto3
 from boto3.dynamodb.conditions import Attr
 
+CORRELATION_ID_KEY = "Correlation_Id"
 DATA_PRODUCT_KEY = "DataProduct"
 STATUS_KEY = "Status"
 STATUS_COMPLETED = "COMPLETED"
@@ -36,12 +37,12 @@ def handler(event, context):
     logger.info(f'Cloudwatch Event": {event}')
     try:
         logger.info(os.getcwd())
-        handle_event()
+        handle_event(event)
     except Exception as err:
         logger.error(f'Exception occurred for invocation", "error_message": {err}')
 
 
-def handle_event():
+def handle_event(event):
     """
     Reads relevant record from dynamoDB table and sens SNS message
     """
@@ -56,9 +57,10 @@ def handle_event():
         raise Exception("Required environment variable TABLE_NAME is unset")
 
     sns_client = get_sns_client()
-    today = get_todays_date()
+    today = get_export_date(event)
+    correlation_id = get_correlation_id(event)
     dynamo_client = get_dynamo_table(args.table_name)
-    dynamo_items = query_dynamo(dynamo_client, today)
+    dynamo_items = query_dynamo(dynamo_client, today, correlation_id)
 
     if not dynamo_items:
         logger.info(
@@ -94,28 +96,48 @@ def send_sns_message(sns_client, payload, sns_topic_arn):
     return sns_client.publish(TopicArn=sns_topic_arn, Message=dumped_payload)
 
 
-def query_dynamo(dynamo_table, today):
+def query_dynamo(dynamo_table, today, correlation_id):
     """Queries the DynamoDb table for todays run of ADG-full application, we will just use Run_Id as 1
 
     Arguments:
         dynamo_table (table): The boto3 table for DynamoDb
         today: Today's date
+        correlation_id: Correlation id or None if not available
 
     Returns:
         list: The items matching the scan operation
 
     """
-    response = dynamo_table.scan(
-        FilterExpression=Attr(DATE_KEY).eq(today)
-        & Attr(DATA_PRODUCT_KEY).eq(DATA_PRODUCT_NAME)
-        & Attr(STATUS_KEY).eq(STATUS_COMPLETED)
-    )
+    if correlation_id is not None:
+        response = dynamo_table.scan(
+            FilterExpression=Attr(DATE_KEY).eq(today)
+            & Attr(CORRELATION_ID_KEY).eq(correlation_id)
+            & Attr(DATA_PRODUCT_KEY).eq(DATA_PRODUCT_NAME)
+            & Attr(STATUS_KEY).eq(STATUS_COMPLETED)
+        )
+    else:
+        response = dynamo_table.scan(
+            FilterExpression=Attr(DATE_KEY).eq(today)
+            & Attr(DATA_PRODUCT_KEY).eq(DATA_PRODUCT_NAME)
+            & Attr(STATUS_KEY).eq(STATUS_COMPLETED)
+        )
+
     logger.info(f"Response from dynamo {response}")
     return response["Items"]
 
 
-def get_todays_date():
+def get_export_date(event):
+    if "export_date" in event:
+        return event["export_date"]
+
     return date_time.now().strftime("%Y-%m-%d")
+
+
+def get_correlation_id(event):
+    if "correlation_id" in event:
+        return event["correlation_id"]
+
+    return None
 
 
 def generate_lambda_launcher_payload(dynamo_item):
