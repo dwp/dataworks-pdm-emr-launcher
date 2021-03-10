@@ -26,7 +26,7 @@ class TestPDMLauncher(unittest.TestCase):
     def test_query_dynamo_item_exists(self, mock_logger):
         dynamodb_resource = self.mock_get_dynamodb_table(self.get_todays_date())
         result = event_handler.query_dynamo(
-            dynamodb_resource, self.get_todays_date(), "test_id"
+            dynamodb_resource, self.get_todays_date(), "test_correlation_id"
         )
         self.assertEqual(
             result,
@@ -80,7 +80,7 @@ class TestPDMLauncher(unittest.TestCase):
                 "correlation_id": "test_correlation_id",
                 "s3_prefix": "test_s3_prefix",
                 "snapshot_type": "full",
-                "export_date": "2020-01-02",
+                "export_date": self.get_todays_date(),
             },
             args.sns_topic,
         )
