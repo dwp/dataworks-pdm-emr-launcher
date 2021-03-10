@@ -129,14 +129,14 @@ def query_dynamo(dynamo_table, today, correlation_id):
 def get_export_date(event):
     if "export_date" in event:
         return event["export_date"]
-        
+
     return date_time.now().strftime("%Y-%m-%d")
 
 
 def get_correlation_id(event):
     if "correlation_id" in event:
         return event["correlation_id"]
-        
+
     return None
 
 
