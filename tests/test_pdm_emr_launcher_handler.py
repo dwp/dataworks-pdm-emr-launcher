@@ -187,7 +187,7 @@ class TestPDMLauncher(unittest.TestCase):
         expected = "test_id"
         actual = event_handler.get_correlation_id(event={"correlation_id": "test_id"})
 
-        assert expected == False
+        assert expected == actual
 
     def test_get_correlation_id_returns_none_if_not_present(
         self,
