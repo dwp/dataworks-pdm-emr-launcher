@@ -34,6 +34,9 @@ def handler(event, context):
     """
     global logger
     logger = setup_logging("INFO")
+
+
+
     logger.info(f'Cloudwatch Event": {event}')
     try:
         logger.info(os.getcwd())
